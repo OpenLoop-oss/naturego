@@ -79,11 +79,26 @@ function ProductsContent() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setSearch(params.get("search") || "");
-    setSelectedCategory(params.get("category") || "");
-    setSortBy(params.get("sortBy") || "createdAt");
-    setSortOrder((params.get("sortOrder") as "asc" | "desc") || "desc");
+    const searchFromUrl = params.get("search") || "";
+    const categoryFromUrl = params.get("category") || "";
+    const sortByFromUrl = params.get("sortBy") || "createdAt";
+    const sortOrderFromUrl = (params.get("sortOrder") as "asc" | "desc") || "desc";
+    
+    if (searchFromUrl !== search) setSearch(searchFromUrl);
+    if (categoryFromUrl !== selectedCategory) setSelectedCategory(categoryFromUrl);
+    if (sortByFromUrl !== sortBy) setSortBy(sortByFromUrl);
+    if (sortOrderFromUrl !== sortOrder) setSortOrder(sortOrderFromUrl);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (selectedCategory) params.set("category", selectedCategory);
+    if (sortBy !== "createdAt") params.set("sortBy", sortBy);
+    if (sortOrder !== "desc") params.set("sortOrder", sortOrder);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }, [search, selectedCategory, sortBy, sortOrder]);
 
   const handleAddToCart = async (productId: string) => {
     if (!isAuthenticated) {
