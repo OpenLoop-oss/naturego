@@ -3,11 +3,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiExcludeEndpoint } from '@nestjs/
 import {
   HealthCheck,
   HealthCheckService,
-  TypeOrmHealthIndicator,
   DiskHealthIndicator,
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
+import { PrismaHealthIndicator } from './prisma.health';
 
 @ApiTags('Health')
 @Controller('health')
@@ -15,7 +15,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 export class HealthController {
   constructor(
     private health: HealthCheckService,
-    private db: TypeOrmHealthIndicator,
+    private db: PrismaHealthIndicator,
     private disk: DiskHealthIndicator,
     private memory: MemoryHealthIndicator,
   ) {}
