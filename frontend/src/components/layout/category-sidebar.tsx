@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { api, Category } from '@/lib/api/client';
@@ -97,13 +97,17 @@ function CategoryIcon({ slug, isActive }: { slug: string; isActive: boolean }) {
 
 export function CategorySidebar() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const selectedCategory = searchParams.get('categoryId') || searchParams.get('category');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSelectedCategory(params.get('categoryId') || params.get('category'));
+  }, []);
+
   const allProductsActive = !selectedCategory && pathname === '/products';
 
   useEffect(() => {

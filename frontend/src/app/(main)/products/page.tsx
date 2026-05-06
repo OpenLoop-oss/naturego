@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -28,36 +29,24 @@ import { formatPrice } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 function ProductsContent() {
-  const [searchParams, setSearchParams] = useState<{
-    get: (key: string) => string | null;
-  } | null>(null);
-  
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSearchParams({
-      get: (key: string) => params.get(key),
-    });
-  }, []);
-  
-  const { isAuthenticated } = useAuthStore();
-  const { addItem: addToCart } = useCartStore();
-
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set());
   const [wishlistLoading, setWishlistLoading] = useState<string | null>(null);
-  const [search, setSearch] = useState(searchParams?.get("search") || "");
-  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams?.get("category") || "");
-  const [sortBy, setSortBy] = useState<string>(searchParams?.get("sortBy") || "createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">((searchParams?.get("sortOrder") as "asc" | "desc") || "desc");
-  const [initialized, setInitialized] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [gridSize, setGridSize] = useState<"small" | "medium">("medium");
+
+  const { isAuthenticated } = useAuthStore();
+  const { addItem: addToCart } = useCartStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,7 +67,6 @@ function ProductsContent() {
         setCategories(categoriesRes || []);
         setTotalPages(productsRes?.pagination?.totalPages || 1);
         setTotalProducts(productsRes?.pagination?.total || 0);
-        setInitialized(true);
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -86,21 +74,16 @@ function ProductsContent() {
       }
     };
 
-    if (searchParams) {
-      fetchData();
-    }
-  }, [page, search, selectedCategory, sortBy, sortOrder, searchParams]);
+    fetchData();
+  }, [page, search, selectedCategory, sortBy, sortOrder]);
 
   useEffect(() => {
-    if (!initialized) return;
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (selectedCategory) params.set("category", selectedCategory);
-    if (sortBy !== "createdAt") params.set("sortBy", sortBy);
-    if (sortOrder !== "desc") params.set("sortOrder", sortOrder);
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.replaceState({}, "", newUrl);
-  }, [search, selectedCategory, sortBy, sortOrder, initialized]);
+    const params = new URLSearchParams(window.location.search);
+    setSearch(params.get("search") || "");
+    setSelectedCategory(params.get("category") || "");
+    setSortBy(params.get("sortBy") || "createdAt");
+    setSortOrder((params.get("sortOrder") as "asc" | "desc") || "desc");
+  }, []);
 
   const handleAddToCart = async (productId: string) => {
     if (!isAuthenticated) {
@@ -131,7 +114,7 @@ function ProductsContent() {
     setPage(1);
   };
 
-  if (loading || !initialized) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-6 py-8">
@@ -436,5 +419,9 @@ function ProductsLoading() {
 }
 
 export default function ProductsPage() {
-  return <ProductsContent />;
+  return (
+    <Suspense fallback={<ProductsLoading />}>
+      <ProductsContent />
+    </Suspense>
+  );
 }
