@@ -25,7 +25,8 @@
     "db:push": "prisma db push",
     "db:reset": "prisma db push --force-reset"
   },
-  "dependencies": {
+    "@nestjs/cli": "^10.3.0",
+    "dependencies": {
     "@nestjs/cli": "^10.3.0",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.1.1",
@@ -58,7 +59,6 @@
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.3.0",
     "@nestjs/schematics": "^10.1.0",
     "@nestjs/testing": "^10.3.0",
     "@types/bcrypt": "^5.0.2",
