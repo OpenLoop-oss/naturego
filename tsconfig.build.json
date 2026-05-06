@@ -6,6 +6,6 @@
     "types": ["node"],
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "prisma/seed.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "prisma/seed.ts"]
 }
