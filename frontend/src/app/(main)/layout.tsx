@@ -13,7 +13,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const { isHydrated, fetchUser } = useAuthStore();
   const { fetchCart } = useCartStore();
 
-  const showSidebar = pathname === '/products' || pathname.startsWith('/products?');
+  // Only show sidebar on products page
+  const showSidebar = pathname === '/products';
 
   useEffect(() => {
     if (isHydrated) {
@@ -22,23 +23,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }
   }, [isHydrated, fetchUser, fetchCart]);
 
-  if (showSidebar) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex pt-16">
-          <CategorySidebar />
-          <main className="flex-1 min-h-[calc(100vh-64px)]">{children}</main>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <Header />
-      <main className="flex-1 pt-16">{children}</main>
+      <div className="flex pt-16">
+        {showSidebar && <CategorySidebar />}
+        <main className="flex-1 min-h-[calc(100vh-64px)]">{children}</main>
+      </div>
       <Footer />
     </div>
   );

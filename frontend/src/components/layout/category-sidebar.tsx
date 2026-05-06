@@ -101,12 +101,17 @@ export function CategorySidebar() {
   const [isLoading, setIsLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSelectedCategory(params.get('categoryId') || params.get('category'));
-  }, []);
+  // Only show sidebar on products page
+  const showSidebar = pathname === '/products';
+
+  const selectedCategory = (() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('categoryId') || params.get('category');
+    }
+    return null;
+  })();
 
   const allProductsActive = !selectedCategory && pathname === '/products';
 
@@ -125,6 +130,8 @@ export function CategorySidebar() {
       setIsLoading(false);
     }
   };
+
+  if (!showSidebar) return null;
 
   return (
     <>
@@ -220,8 +227,8 @@ export function CategorySidebar() {
                         isActive
                           ? 'bg-green-600 text-white'
                           : isHovered
-                            ? 'bg-gray-50'
-                            : 'text-gray-600',
+                          ? 'bg-gray-50'
+                          : 'text-gray-600',
                       )}
                     >
                       <CategoryIcon slug={category.slug} isActive={isActive} />

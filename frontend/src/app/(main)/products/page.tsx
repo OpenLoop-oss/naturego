@@ -69,6 +69,8 @@ function ProductsContent() {
         setTotalProducts(productsRes?.pagination?.total || 0);
       } catch (error) {
         console.error("Failed to fetch data:", error);
+        setProducts([]);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
