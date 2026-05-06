@@ -1,0 +1,309 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  isEmailVerified Boolean @default(false)
+  emailVerificationToken String?
+  emailVerificationExpires DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  cartItems     CartItem[]
+  orders        Order[]
+  addresses     Address[]
+  wishlists     Wishlist[]
+  orderHistory  OrderHistory[]
+  stockMovements StockMovement[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlists")
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String   @default("Home")
+  fullName    String
+  phone       String
+  addressLine1 String
+  addressLine2 String?
+  city        String
+  state       String
+  postalCode  String
+  country     String   @default("India")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("addresses")
+}
+
+model RefreshToken {
+  id           String   @id @default(uuid())
+  token        String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent    String?
+  ipAddress    String?
+  family       String?
+  city         String?
+  country      String?
+  isRevoked    Boolean  @default(false)
+  revokedAt    DateTime?
+  replacedByToken String? @unique
+
+  @@map("refresh_tokens")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  sku         String?  @unique
+  lowStockThreshold Int @default(10)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  cartItems   CartItem[]
+  guestCartItems GuestCartItem[]
+  orderItems  OrderItem[]
+  wishlists   Wishlist[]
+  stockMovements StockMovement[]
+
+  @@map("products")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+
+  @@map("categories")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model GuestCartItem {
+  id        String   @id @default(uuid())
+  sessionId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, productId])
+  @@map("guest_cart_items")
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  totalPrice    Decimal       @db.Decimal(10, 2)
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentGateway String?      @default("razorpay")
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  phonepeTransactionId String?
+  shiprocketOrderId String?
+  shiprocketShipmentId String?
+  trackingNumber String?
+  carrier       String?
+  notes         String?
+  customerNotes String?
+  guestEmail    String?
+  guestName     String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  completedAt   DateTime?
+  
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  items         OrderItem[]
+  history       OrderHistory[]
+  shippingAddress Json?
+
+  @@map("orders")
+}
+
+model OrderHistory {
+  id          String   @id @default(uuid())
+  action      String   // STATUS_CHANGE, TRACKING_ADDED, NOTE_ADDED, CREATED
+  oldValue    String?
+  newValue    String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("order_history")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+enum Role {
+  USER
+  MANAGER
+  SUPPORT
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  PACKED
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURNED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUND_PENDING
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model StockMovement {
+  id            String           @id @default(uuid())
+  type          StockMovementType
+  quantity      Int
+  referenceId   String?
+  referenceType String?         // ORDER, RETURN, ADJUSTMENT, INITIAL
+  reason        String?
+  notes         String?
+  createdAt     DateTime         @default(now())
+
+  productId     String?
+  product       Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  userId        String?
+  user          User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("stock_movements")
+}
+
+enum StockMovementType {
+  INITIAL
+  SALE
+  RETURN
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  DAMAGED
+  RESERVED
+  RESERVED_RELEASED
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  entityType  String   // Product, Order, User
+  entityId    String?
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@map("password_resets")
+}

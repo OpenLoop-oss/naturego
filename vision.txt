@@ -1,0 +1,102 @@
+==============================
+OpenCode Project – Vision Document
+==============================
+
+Project Name: OpenCode E-Commerce Platform
+Project Type: Full-Stack Web Application
+Goal: Build a fully functional, production-ready e-commerce website supporting multiple users, role-based access, and complete product, cart, and order management.
+
+------------------------------
+1. Vision Statement
+------------------------------
+OpenCode aims to provide a modern, scalable, and secure e-commerce platform where users can browse products, add them to their cart, place orders, and track them. Admins can manage products, monitor orders, and maintain the system efficiently. The platform will be robust, fast, and production-ready, supporting real-world business needs.
+
+------------------------------
+2. Target Audience
+------------------------------
+- **End Users**: Customers looking to browse products, add items to cart, and make purchases.
+- **Admin Users**: Staff who manage products, view and update orders, and maintain the platform.
+- **Development / QA Team**: Engineers testing, deploying, and scaling the application.
+
+------------------------------
+3. Core Features
+------------------------------
+
+**User Features:**
+- User registration, login, and logout
+- Profile management (view, update, delete)
+- JWT-based authentication with refresh tokens
+- Browse products with detailed information
+- Add products to cart, update quantity, remove items
+- Checkout and place orders
+- View order history and status
+- Role-based access control (USER vs ADMIN)
+
+**Admin Features:**
+- Create, update, and delete products
+- Manage stock levels and product details
+- View all orders, filter by status, and update order processing
+- Monitor user activity and manage accounts
+
+**System Features:**
+- RESTful API built with NestJS
+- PostgreSQL database with Prisma ORM
+- Secure JWT-based authentication
+- Automated scripts for testing end-to-end workflows
+- Swagger API documentation
+- Logging and error handling
+
+------------------------------
+4. User Experience (UX)
+------------------------------
+- **Homepage**: Lists all products with search, filter, and sorting options
+- **Product Page**: Detailed view of the product with images, description, price, and stock
+- **Cart**: Users can see added products, edit quantities, remove items, and proceed to checkout
+- **Checkout**: Simple, intuitive process with order confirmation
+- **User Profile**: Easy access to profile settings and order history
+- **Admin Dashboard**: Centralized panel for managing products, orders, and users
+
+------------------------------
+5. Technical Vision
+------------------------------
+- **Frontend**: React/Next.js or similar (planned)
+- **Backend**: NestJS, Prisma, PostgreSQL
+- **Authentication**: JWT (access + refresh tokens)
+- **Security**: Role-based access, input validation, hashed passwords
+- **Automation**: Full-flow Bash scripts to test cart and order workflows
+- **Deployment**: Ready for production on cloud (Docker, CI/CD pipelines)
+
+------------------------------
+6. Success Criteria
+------------------------------
+- All user and admin features are fully functional
+- Cart and order system works reliably with stock validation
+- Role-based access control prevents unauthorized actions
+- APIs are fully documented and tested
+- System is scalable, secure, and production-ready
+- Automation scripts validate multi-user flows successfully
+
+------------------------------
+7. Future Enhancements
+------------------------------
+- Payment gateway integration (Stripe, PayPal)
+- Product recommendations and ratings
+- Advanced order tracking (shipped, delivered)
+- Admin analytics dashboard
+- Notifications (email / push) for order status updates
+- Multi-language support and internationalization
+
+------------------------------
+8. End Product Vision
+------------------------------
+OpenCode will be a modern e-commerce web platform where:
+
+- Users can browse, select, and purchase products seamlessly.
+- Admins can manage the catalog, process orders, and oversee users effortlessly.
+- All operations are secure, logged, and scalable for production deployment.
+- The site will be visually appealing, intuitive, and fully automated for testing and operational flows.
+- The platform will be ready to handle real-world business traffic and transactions.
+
+==============================
+End of Vision Document
+==============================
