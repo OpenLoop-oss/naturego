@@ -65,7 +65,7 @@ async function bootstrap() {
     origin:
       nodeEnv === 'development'
         ? true
-        : [frontendUrl, 'http://localhost:3001', 'http://localhost:3000'],
+        : [frontendUrl, 'https://naturego-ten.vercel.app', 'http://localhost:3001', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-CSRF-Token', 'x-session-id'],
