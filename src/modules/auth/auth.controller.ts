@@ -10,6 +10,7 @@ import {
   Delete,
   Param,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
@@ -123,10 +124,7 @@ export class AuthController {
     const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
-      return res.status(HttpStatus.UNAUTHORIZED).json({
-        success: false,
-        message: 'Refresh token not found',
-      });
+      throw new UnauthorizedException('Refresh token not found');
     }
 
     const tokens = await this.authService.refreshTokens(

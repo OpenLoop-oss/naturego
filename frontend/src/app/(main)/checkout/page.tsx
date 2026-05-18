@@ -122,6 +122,9 @@ export default function CheckoutPage() {
     fetchCart();
     if (isAuthenticated) {
       fetchAddresses();
+      setIsGuest(false);
+    } else {
+      setIsGuest(true);
     }
     loadRazorpayScript();
   }, [isAuthenticated, fetchCart]);

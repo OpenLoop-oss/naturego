@@ -65,6 +65,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       error,
     };
 
-    response.status(status).json(errorResponse);
+    if (!response.headersSent) {
+      response.status(status).json(errorResponse);
+    }
   }
 }

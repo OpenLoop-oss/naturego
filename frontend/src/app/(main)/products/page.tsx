@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -32,10 +32,12 @@ function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetching, setFetching] = useState(false);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set());
   const [wishlistLoading, setWishlistLoading] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -44,45 +46,64 @@ function ProductsContent() {
   const [totalProducts, setTotalProducts] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [gridSize, setGridSize] = useState<"small" | "medium">("medium");
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const { isAuthenticated } = useAuthStore();
   const { addItem: addToCart } = useCartStore();
 
+  // Debounce search input
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [search]);
+
+  // Fetch categories once on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.getCategories();
+        setCategories(Array.isArray(res) ? res : res?.categories || []);
+      } catch {}
+    })();
+  }, []);
+
+  // Fetch products on filter change
   useEffect(() => {
     const fetchData = async () => {
+      if (!loading) setFetching(true);
       try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          api.getProducts({
-            page,
-            limit: 12,
-            search: search || undefined,
-            categoryId: selectedCategory || undefined,
-            sortBy,
-            sortOrder,
-          }),
-          api.getCategories(),
-        ]);
+        const res = await api.getProducts({
+          page,
+          limit: 12,
+          search: debouncedSearch || undefined,
+          categoryId: selectedCategory || undefined,
+          sortBy,
+          sortOrder,
+        });
 
-        setProducts(productsRes?.products || []);
-        setCategories(categoriesRes || []);
-        setTotalPages(productsRes?.pagination?.totalPages || 1);
-        setTotalProducts(productsRes?.pagination?.total || 0);
+        setProducts(res?.products || []);
+        setTotalPages(res?.pagination?.totalPages || 1);
+        setTotalProducts(res?.pagination?.total || 0);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setProducts([]);
-        setCategories([]);
       } finally {
         setLoading(false);
+        setFetching(false);
       }
     };
 
     fetchData();
-  }, [page, search, selectedCategory, sortBy, sortOrder]);
+  }, [page, debouncedSearch, selectedCategory, sortBy, sortOrder]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const searchFromUrl = params.get("search") || "";
-    const categoryFromUrl = params.get("category") || "";
+    const categoryFromUrl = params.get("categoryId") || params.get("category") || "";
     const sortByFromUrl = params.get("sortBy") || "createdAt";
     const sortOrderFromUrl = (params.get("sortOrder") as "asc" | "desc") || "desc";
     
@@ -95,7 +116,7 @@ function ProductsContent() {
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
-    if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedCategory) params.set("categoryId", selectedCategory);
     if (sortBy !== "createdAt") params.set("sortBy", sortBy);
     if (sortOrder !== "desc") params.set("sortOrder", sortOrder);
     const newUrl = `${window.location.pathname}?${params.toString()}`;
@@ -103,11 +124,6 @@ function ProductsContent() {
   }, [search, selectedCategory, sortBy, sortOrder]);
 
   const handleAddToCart = async (productId: string) => {
-    if (!isAuthenticated) {
-      toast.error("Please login to add items to cart");
-      return;
-    }
-
     setAddingToCart(productId);
     try {
       const success = await addToCart(productId, 1);
@@ -125,6 +141,7 @@ function ProductsContent() {
 
   const clearFilters = () => {
     setSearch("");
+    setDebouncedSearch("");
     setSelectedCategory("");
     setSortBy("createdAt");
     setSortOrder("desc");
@@ -171,10 +188,7 @@ function ProductsContent() {
               <Input
                 placeholder="Search products..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 w-64 rounded-xl border-sand/30 bg-white/80"
               />
             </div>
@@ -295,8 +309,21 @@ function ProductsContent() {
           )}
 
           {/* Products Grid */}
-          <div className="flex-1">
-            {products.length === 0 ? (
+          <div className="flex-1 relative">
+            {/* Subtle loading overlay for filter changes */}
+            {fetching && (
+              <div className="absolute inset-0 bg-white/50 z-10 flex items-start justify-center pt-20 rounded-2xl pointer-events-none">
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>Updating...</span>
+                </div>
+              </div>
+            )}
+
+            {products.length === 0 && !fetching ? (
               <div className="text-center py-12">
                 <ShoppingBag className="h-12 w-12 mx-auto text-sage mb-4" />
                 <p className="text-lg text-sage">No products found</p>
@@ -319,7 +346,7 @@ function ProductsContent() {
                     key={product.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: index * 0.03 }}
                   >
                     <Link href={`/products/${product.id}`}>
                       <Card className="rounded-2xl border-sand/30 hover:border-forest/30 hover:shadow-xl transition-all duration-300 overflow-hidden group">
